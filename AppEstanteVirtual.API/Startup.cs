@@ -6,9 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using AppEstanteVirtual.Infrastructure.Contexts;
-using AppEstanteVirtual.Infrastructure.Repositories;
-using AppEstanteVirtual.Domain.Repositories;
-using AppEstanteVirtual.Application.Services;
+using AppEstanteVirtual.API.Extensions;
 
 namespace AppEstanteVirtual.API
 {
@@ -21,28 +19,32 @@ namespace AppEstanteVirtual.API
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-            //services.AddSingleton<IBookRepository, BookRepository>();
-            services.AddScoped<IBookRepository, BookRepository>();
-            services.AddScoped<BookService>();
-            //services.AddDbContext<DataContext>(m => m.UseSqlServer(Configuration.GetConnectionString("BooksDB")), ServiceLifetime.Singleton);
-            services.AddDbContext<DataContext>(opt => opt.UseInMemoryDatabase("BooksDB"));
+            services.AddServices();
+            services.AddRepositories();
+
+            services.AddDbContext<DataContext>(options => 
+                options.UseSqlServer(Configuration.GetConnectionString("EstanteVirtualDB")), ServiceLifetime.Transient);
+
+            services.AddControllers().AddNewtonsoftJson(options =>
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
+
             services.AddSwaggerGen(c => 
             {
                 c.SwaggerDoc("v1", new OpenApiInfo
                 {
                     Title = "AppEstanteVirtual.API",
-                    Version = "v1"
+                    Version = "v1",
+                    Description = "WebApi .NET Core to manage and consult books"
                 });
             });
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

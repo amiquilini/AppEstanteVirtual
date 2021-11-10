@@ -14,6 +14,8 @@ namespace AppEstanteVirtual.Domain.Enums
         Manga,
         Romance,
         Thriller,
-        Horror
+        Horror,
+        Drama,
+        Outros
     }
 }

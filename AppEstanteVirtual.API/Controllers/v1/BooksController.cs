@@ -1,12 +1,12 @@
-﻿using AppEstanteVirtual.Application.DTOs.InputModels;
-using AppEstanteVirtual.Application.DTOs.OutputModels;
+﻿using AppEstanteVirtual.Domain.DTOs.InputModels;
+using AppEstanteVirtual.Domain.DTOs.OutputModels;
 using AppEstanteVirtual.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
 namespace AppEstanteVirtual.API.Controllers.v1
 {
-    [Route("v1/[controller]")]
+    [Route("v1/Books")]
     [ApiController]
     public class BooksController : ControllerBase
     {
@@ -38,18 +38,33 @@ namespace AppEstanteVirtual.API.Controllers.v1
             return Ok(book);
         }
 
-        [HttpGet("progress/{progress}")]
-        public async Task<ActionResult> GetBookByProgress(int progress)
+        [HttpGet("ByProgress/{progress}")]
+        public async Task<ActionResult> GetBooksByProgress(int progress)
         {
             var books = await _bookService.GetBooksByProgress(progress);
 
             return Ok(books);
         }
 
-        [HttpGet("genre/{genre}")]
-        public async Task<ActionResult> GetBookByGenre(int genre)
+        [HttpGet("ByGenre/{genre}")]
+        public async Task<ActionResult> GetBooksByGenre(int genre)
         {
             var books = await _bookService.GetBooksByGenre(genre);
+
+            return Ok(books);
+        }
+
+        [HttpGet("ByAuthor/{authorId}")]
+        public async Task<ActionResult> GetBooksByAuthor(int authorId, [FromServices] AuthorService authorService)
+        {
+            var author = await authorService.GetByIdAsync(authorId);
+
+            if (author == null)
+            {
+                return NotFound("Author not found");
+            }
+
+            var books = await _bookService.GetBooksByAuthor(authorId);
 
             return Ok(books);
         }
@@ -63,14 +78,20 @@ namespace AppEstanteVirtual.API.Controllers.v1
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult> UpdateBook(int id, [FromBody] BookOutputModelDTO bookOutputModelDTO)
+        public async Task<ActionResult> UpdateBook(int id, [FromBody] BookInputModelDTO bookInputModelDTO, [FromServices] AuthorService authorService)
         {
-            if (id != bookOutputModelDTO.Id)
+            if (id != bookInputModelDTO.Id)
                 return BadRequest("Book Id mismatch");
 
-            await _bookService.UpdateAsync(bookOutputModelDTO);
+            var author = await authorService.GetByIdAsync(bookInputModelDTO.AuthorId);
+            if (author == null)
+            {
+                return NotFound("Author not found");
+            }
 
-            return Ok(bookOutputModelDTO);
+            await _bookService.UpdateAsync(bookInputModelDTO);
+
+            return Ok(bookInputModelDTO);
         }
 
         [HttpDelete("{id}")]

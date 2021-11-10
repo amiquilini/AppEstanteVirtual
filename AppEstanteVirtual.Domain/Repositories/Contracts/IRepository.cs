@@ -3,10 +3,10 @@ using System.Threading.Tasks;
 
 namespace AppEstanteVirtual.Domain.Repositories.Contracts
 {
-    public interface IRepository<T> where T : class
+    public interface IRepository<T, TDtoOutputModel>
     {
-        Task<List<T>> GetAllAsync();
-        Task<T> GetByIdAsync(int id);
+        Task<List<TDtoOutputModel>> GetAllAsync();
+        Task<TDtoOutputModel> GetByIdAsync(int id);
         Task<int> CreateAsync(T entity);
         Task UpdateAsync(T entity);
         Task DeleteAsync(int id);

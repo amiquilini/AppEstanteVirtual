@@ -1,4 +1,5 @@
-﻿using AppEstanteVirtual.Domain.Entities;
+﻿using AppEstanteVirtual.Domain.DTOs.OutputModels;
+using AppEstanteVirtual.Domain.Entities;
 using AppEstanteVirtual.Domain.Repositories;
 using AppEstanteVirtual.Infrastructure.Contexts;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +27,7 @@ namespace AppEstanteVirtual.Infrastructure.Repositories
 
         public async Task UpdateAsync(Book entity)
         {
-            _context.Entry(entity).State = EntityState.Modified;
+            _context.Update(entity);
             await _context.SaveChangesAsync();
         }
 
@@ -37,28 +38,54 @@ namespace AppEstanteVirtual.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<Book>> GetAllAsync()
+        public async Task<List<BookOutputModelDTO>> GetAllAsync()
         {
-            return await _context.Books.ToListAsync();
+            var books = await _context.Books
+                            .AsNoTrackingWithIdentityResolution()
+                            .Select(x => x.ConvertToObjectOutPut())
+                            .ToListAsync();
+            return books;
         }
 
-        public async Task<Book> GetByIdAsync(int id)
+        public async Task<BookOutputModelDTO> GetByIdAsync(int id)
         {
-            return await _context.Books.FindAsync(id);
+            var book = await _context.Books
+                            .AsNoTrackingWithIdentityResolution()
+                            .FirstOrDefaultAsync(x => x.Id == id);
+
+            return book?.ConvertToObjectOutPut();
         }
 
-        public async Task<List<Book>> GetBooksByProgress(int progress)
+        public async Task<List<BookOutputModelDTO>> GetBooksByProgress(int progress)
         {
-            return await _context.Books
-                .Where(b => (int)b.Progress == progress)
-                .ToListAsync();
+            var books = await _context.Books
+                            .AsNoTrackingWithIdentityResolution()
+                            .Where(b => (int)b.Progress == progress)
+                            .Select(x => x.ConvertToObjectOutPut())
+                            .ToListAsync();
+            return books;
+
         }
 
-        public async Task<List<Book>> GetBooksByGenre(int genre)
+        public async Task<List<BookOutputModelDTO>> GetBooksByGenre(int genre)
         {
-            return await _context.Books
-                .Where(b => (int)b.Genre == genre)
-                .ToListAsync();
+
+            var books = await _context.Books
+                            .AsNoTrackingWithIdentityResolution()
+                            .Where(b => (int)b.Genre == genre)
+                            .Select(x => x.ConvertToObjectOutPut())
+                            .ToListAsync();
+            return books;
+        }
+
+        public async Task<List<BookOutputModelDTO>> GetBooksByAuthor(int author)
+        {
+            var books = await _context.Books
+                            .AsNoTrackingWithIdentityResolution()
+                            .Where(b => b.AuthorId == author)
+                            .Select(x => x.ConvertToObjectOutPut())
+                            .ToListAsync();
+            return books;
         }
     }
 }
