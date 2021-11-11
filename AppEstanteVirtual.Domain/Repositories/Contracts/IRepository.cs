@@ -7,7 +7,7 @@ namespace AppEstanteVirtual.Domain.Repositories.Contracts
     {
         Task<List<TDtoOutputModel>> GetAllAsync();
         Task<TDtoOutputModel> GetByIdAsync(int id);
-        Task<int> CreateAsync(T entity);
+        Task CreateAsync(T entity);
         Task UpdateAsync(T entity);
         Task DeleteAsync(int id);
     }

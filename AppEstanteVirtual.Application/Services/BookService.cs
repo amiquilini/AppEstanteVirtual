@@ -14,13 +14,11 @@ namespace AppEstanteVirtual.Application.Services
             _bookRepository = bookRepository;
         }
 
-        public async Task<int> CreateAsync(BookInputModelDTO bookInputModelDTO)
+        public async Task CreateAsync(BookInputModelDTO bookInputModelDTO)
         {
             var book = bookInputModelDTO.ConvertToObject();
 
-            var id = await _bookRepository.CreateAsync(book);
-
-            return id;
+            await _bookRepository.CreateAsync(book);
         }
 
         public async Task UpdateAsync(BookInputModelDTO bookInputModelDTO)

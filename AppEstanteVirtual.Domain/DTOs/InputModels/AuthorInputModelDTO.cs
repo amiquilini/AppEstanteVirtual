@@ -7,14 +7,12 @@ namespace AppEstanteVirtual.Domain.DTOs.InputModels
     public class AuthorInputModelDTO : DTOBase<AuthorInputModelDTO, Author>
     {
         public AuthorInputModelDTO() { }
-        public AuthorInputModelDTO(string name, int? id)
+        public AuthorInputModelDTO(string name)
         {
             Name = name;
-            Id = id;
         }
 
         [Required(ErrorMessage = "Inform the name of the author")]
         public string Name { get; set; }
-        public int? Id { get; set; }
     }
 }

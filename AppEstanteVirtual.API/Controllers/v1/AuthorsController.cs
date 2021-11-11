@@ -3,6 +3,11 @@ using AppEstanteVirtual.Application.Services;
 using AppEstanteVirtual.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using AppEstanteVirtual.Domain.Shared.Contracts;
+using AppEstanteVirtual.Domain.Shared;
+using AppEstanteVirtual.Domain.Constants;
+using System;
+using Microsoft.AspNetCore.Http;
 
 namespace AppEstanteVirtual.API.Controllers.v1
 {
@@ -11,6 +16,7 @@ namespace AppEstanteVirtual.API.Controllers.v1
     public class AuthorsController : ControllerBase
     {
         private readonly AuthorService _authorService;
+        private Task<IResult> _result;
 
         public AuthorsController(AuthorService authorService)
         {
@@ -20,56 +26,103 @@ namespace AppEstanteVirtual.API.Controllers.v1
         [HttpGet]
         public async Task<ActionResult> GetAuthors()
         {
-            var authors = await _authorService.GetAllAsync();
+            try
+            {
+                var authors = await _authorService.GetAllAsync();
 
-            return Ok(authors);
+                _result = Result.ResultAsync(GlobalMessageConstants.MessageEmpty, authors);
+                return Ok(_result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult> GetAuthorById(int id)
         {
-            var author = await _authorService.GetByIdAsync(id);
-
-            if (author == null)
+            try
             {
-                return NotFound();
-            }
+                var author = await _authorService.GetByIdAsync(id);
 
-            return Ok(author);
+                if (author == null)
+                {
+                    _result = Result.ResultAsync(GlobalMessageConstants.MessageDataNotFound, author);
+                    return NotFound(_result);
+                }
+
+                _result = Result.ResultAsync(GlobalMessageConstants.MessageEmpty, author);
+                return Ok(_result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
 
         [HttpPost]
         public async Task<ActionResult> CreateAuthor([FromBody] AuthorInputModelDTO authorInputModelDTO)
         {
-            var id = await _authorService.CreateAsync(authorInputModelDTO);
+            try
+            {
+                await _authorService.CreateAsync(authorInputModelDTO);
 
-            return CreatedAtAction(nameof(GetAuthorById), new { id = id }, authorInputModelDTO);
+                _result = Result.ResultAsync(GlobalMessageConstants.MessageSucessRegistered, authorInputModelDTO.ConvertToObject().ConvertToObjectOutPut());
+                return Ok(_result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
 
         [HttpPut("{id}")]
         public async Task<ActionResult> UpdateAuthor(int id, [FromBody] AuthorInputModelDTO authorInputModelDTO)
         {
+            try
+            {
+                var author = await _authorService.GetByIdAsync(id);
+                if (author == null)
+                {
+                    _result = Result.ResultAsync(GlobalMessageConstants.MessageDataNotFound, authorInputModelDTO);
+                    return NotFound(_result);
+                }
 
-            if (id != authorInputModelDTO.Id || authorInputModelDTO.Id == null)
-                return BadRequest("Author Id mismatch");
+                await _authorService.UpdateAsync(authorInputModelDTO);
 
-            await _authorService.UpdateAsync(authorInputModelDTO);
+                _result = Result.ResultAsync(GlobalMessageConstants.MessageSucessChange, authorInputModelDTO);
+                return Ok(_result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
 
-            return Ok(authorInputModelDTO);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAuthor(int id)
         {
-            var author = await _authorService.GetByIdAsync(id);
-            if (author == null)
+            try
             {
-                return NotFound();
+                var author = await _authorService.GetByIdAsync(id);
+                if (author == null)
+                {
+                    _result = Result.ResultAsync(GlobalMessageConstants.MessageDataNotFound, author);
+                    return NotFound(_result);
+                }
+
+                await _authorService.DeleteAsync(id);
+
+                _result = Result.ResultAsync(GlobalMessageConstants.MessageSucessRemove, author);
+                return Ok(_result);
             }
-
-            await _authorService.DeleteAsync(id);
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+            
         }
     }
 }

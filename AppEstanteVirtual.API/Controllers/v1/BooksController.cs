@@ -1,8 +1,12 @@
 ﻿using AppEstanteVirtual.Domain.DTOs.InputModels;
-using AppEstanteVirtual.Domain.DTOs.OutputModels;
 using AppEstanteVirtual.Application.Services;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading.Tasks;
+using AppEstanteVirtual.Domain.Shared;
+using AppEstanteVirtual.Domain.Constants;
+using AppEstanteVirtual.Domain.Shared.Contracts;
+using Microsoft.AspNetCore.Http;
 
 namespace AppEstanteVirtual.API.Controllers.v1
 {
@@ -11,6 +15,7 @@ namespace AppEstanteVirtual.API.Controllers.v1
     public class BooksController : ControllerBase
     {
         private readonly BookService _bookService;
+        private Task<IResult> _result;
 
         public BooksController(BookService bookService)
         {
@@ -20,92 +25,166 @@ namespace AppEstanteVirtual.API.Controllers.v1
         [HttpGet]
         public async Task<ActionResult> GetBooks()
         {
-            var books = await _bookService.GetAllAsync();
+            try
+            {
+                var books = await _bookService.GetAllAsync();
 
-            return Ok(books);
+                _result = Result.ResultAsync(GlobalMessageConstants.MessageEmpty, books);
+                return Ok(_result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult> GetBookById(int id)
         {
-            var book = await _bookService.GetByIdAsync(id);
-
-            if (book == null)
+            try
             {
-                return NotFound();
-            }
+                var book = await _bookService.GetByIdAsync(id);
 
-            return Ok(book);
+                if (book == null)
+                {
+                    _result = Result.ResultAsync(GlobalMessageConstants.MessageDataNotFound, book);
+                    return NotFound(_result);
+                }
+
+                _result = Result.ResultAsync(GlobalMessageConstants.MessageEmpty, book);
+                return Ok(_result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+            
         }
 
         [HttpGet("ByProgress/{progress}")]
         public async Task<ActionResult> GetBooksByProgress(int progress)
         {
-            var books = await _bookService.GetBooksByProgress(progress);
+            try
+            {
+                var books = await _bookService.GetBooksByProgress(progress);
 
-            return Ok(books);
+                _result = Result.ResultAsync(GlobalMessageConstants.MessageEmpty, books);
+                return Ok(_result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
 
         [HttpGet("ByGenre/{genre}")]
         public async Task<ActionResult> GetBooksByGenre(int genre)
         {
-            var books = await _bookService.GetBooksByGenre(genre);
+            try
+            {
+                var books = await _bookService.GetBooksByGenre(genre);
 
-            return Ok(books);
+                _result = Result.ResultAsync(GlobalMessageConstants.MessageEmpty, books);
+                return Ok(_result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+
         }
 
         [HttpGet("ByAuthor/{authorId}")]
         public async Task<ActionResult> GetBooksByAuthor(int authorId, [FromServices] AuthorService authorService)
         {
-            var author = await authorService.GetByIdAsync(authorId);
-
-            if (author == null)
+            try
             {
-                return NotFound("Author not found");
+                var author = await authorService.GetByIdAsync(authorId);
+
+                if (author == null)
+                {
+                    _result = Result.ResultAsync(GlobalMessageConstants.MessageDataNotFound, author);
+                    return NotFound(_result);
+                }
+
+                var books = await _bookService.GetBooksByAuthor(authorId);
+
+                _result = Result.ResultAsync(GlobalMessageConstants.MessageEmpty, books);
+                return Ok(_result);
             }
-
-            var books = await _bookService.GetBooksByAuthor(authorId);
-
-            return Ok(books);
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
 
         [HttpPost]
         public async Task<ActionResult> CreateBook([FromBody] BookInputModelDTO bookInputModelDTO)
         {
-            var id = await _bookService.CreateAsync(bookInputModelDTO);
+            try
+            {
+                await _bookService.CreateAsync(bookInputModelDTO);
 
-            return CreatedAtAction(nameof(GetBookById), new { id = id }, bookInputModelDTO);
+                _result = Result.ResultAsync(GlobalMessageConstants.MessageSucessRegistered, bookInputModelDTO.ConvertToObject().ConvertToObjectOutPut());
+                return Ok(_result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
 
         [HttpPut("{id}")]
         public async Task<ActionResult> UpdateBook(int id, [FromBody] BookInputModelDTO bookInputModelDTO, [FromServices] AuthorService authorService)
         {
-            if (id != bookInputModelDTO.Id)
-                return BadRequest("Book Id mismatch");
-
-            var author = await authorService.GetByIdAsync(bookInputModelDTO.AuthorId);
-            if (author == null)
+            try
             {
-                return NotFound("Author not found");
+                var book = await _bookService.GetByIdAsync(id);
+                if (book == null)
+                {
+                    _result = Result.ResultAsync(GlobalMessageConstants.MessageDataNotFound, bookInputModelDTO);
+                    return NotFound(_result);
+                }
+
+                var author = await authorService.GetByIdAsync(bookInputModelDTO.AuthorId);
+                if (author == null)
+                {
+                    _result = Result.ResultAsync(GlobalMessageConstants.MessageDataNotFound, author);
+                    return NotFound(_result);
+                }
+
+                await _bookService.UpdateAsync(bookInputModelDTO);
+
+                _result = Result.ResultAsync(GlobalMessageConstants.MessageSucessChange, bookInputModelDTO);
+                return Ok(_result);
             }
-
-            await _bookService.UpdateAsync(bookInputModelDTO);
-
-            return Ok(bookInputModelDTO);
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBook(int id)
         {
-            var book = await _bookService.GetByIdAsync(id);
-            if (book == null)
+            try
             {
-                return NotFound();
+                var book = await _bookService.GetByIdAsync(id);
+                if (book == null)
+                {
+                    _result = Result.ResultAsync(GlobalMessageConstants.MessageDataNotFound, book);
+                    return NotFound(_result);
+                }
+
+                await _bookService.DeleteAsync(id);
+
+                _result = Result.ResultAsync(GlobalMessageConstants.MessageSucessRemove, book);
+                return Ok(_result);
             }
-
-            await _bookService.DeleteAsync(id);
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
     }
 }

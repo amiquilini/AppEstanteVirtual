@@ -17,12 +17,10 @@ namespace AppEstanteVirtual.Infrastructure.Repositories
         {
             _context = context;
         }
-        public async Task<int> CreateAsync(Book entity)
+        public async Task CreateAsync(Book entity)
         {
             _context.Books.Add(entity);
             await _context.SaveChangesAsync();
-
-            return entity.Id;
         }
 
         public async Task UpdateAsync(Book entity)

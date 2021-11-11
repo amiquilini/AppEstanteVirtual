@@ -8,9 +8,8 @@ namespace AppEstanteVirtual.Domain.DTOs.InputModels
     public class BookInputModelDTO : DTOBase<BookInputModelDTO, Book>
     {
         public BookInputModelDTO() { }
-        public BookInputModelDTO(int id, string title, int authorId, int? pages, GenreEnum? genre, ProgressEnum progress, string coverUrl)
+        public BookInputModelDTO(string title, int authorId, int? pages, GenreEnum? genre, ProgressEnum progress, string coverUrl)
         {
-            Id = id;
             Title = title;
             AuthorId = authorId;
             Pages = pages;
@@ -19,7 +18,6 @@ namespace AppEstanteVirtual.Domain.DTOs.InputModels
             CoverUrl = coverUrl;
         }
 
-        public int Id { get; set; }
         [Required(ErrorMessage = "Inform the title of the book")]
         public string Title { get; set; }
         [Required(ErrorMessage = "Inform the author of the book")]

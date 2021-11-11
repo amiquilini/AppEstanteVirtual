@@ -15,13 +15,12 @@ namespace AppEstanteVirtual.Application.Services
             _authorRepository = authorRepository;
         }
 
-        public async Task<int> CreateAsync(AuthorInputModelDTO authorInputModelDTO)
+        public async Task CreateAsync(AuthorInputModelDTO authorInputModelDTO)
         {
             var author = authorInputModelDTO.ConvertToObject();
 
-            var id = await _authorRepository.CreateAsync(author);
+            await _authorRepository.CreateAsync(author);
 
-            return id;
         }
 
         public async Task UpdateAsync(AuthorInputModelDTO authorInputModelDTO)
