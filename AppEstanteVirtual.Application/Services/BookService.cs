@@ -1,7 +1,9 @@
-﻿using AppEstanteVirtual.Domain.DTOs.InputModels;
-using AppEstanteVirtual.Domain.DTOs.OutputModels;
+﻿using AppEstanteVirtual.Domain.Constants;
+using AppEstanteVirtual.Domain.DTOs.InputModels;
 using AppEstanteVirtual.Domain.Repositories;
-using System.Collections.Generic;
+using AppEstanteVirtual.Domain.Shared;
+using AppEstanteVirtual.Domain.Shared.Contracts;
+using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 
 namespace AppEstanteVirtual.Application.Services
@@ -9,63 +11,99 @@ namespace AppEstanteVirtual.Application.Services
     public class BookService
     {
         private readonly IBookRepository _bookRepository;
+
         public BookService(IBookRepository bookRepository)
         {
             _bookRepository = bookRepository;
         }
 
-        public async Task CreateAsync(BookInputModelDTO bookInputModelDTO)
+        public async Task<IResult> CreateAsync(BookInputModelDTO bookInputModelDTO)
         {
             var book = bookInputModelDTO.ConvertToObject();
-
             await _bookRepository.CreateAsync(book);
+
+            return await Result.ResultAsync(StatusCodes.Status200OK, GlobalMessageConstants.MessageSucessRegistered, book.ConvertToObjectOutPut());
         }
 
-        public async Task UpdateAsync(BookInputModelDTO bookInputModelDTO)
+        public async Task<IResult> UpdateAsync(int id, BookInputModelDTO bookInputModelDTO, AuthorService authorService)
         {
-            var book = bookInputModelDTO.ConvertToObject();
+            var book = await _bookRepository.GetByIdAsync(id);
+            if (book == null)
+            {
+                return await Result.ResultAsync(StatusCodes.Status404NotFound, GlobalMessageConstants.MessageDataNotFound);
+            }
 
-            await _bookRepository.UpdateAsync(book);
+            var author = await authorService.GetByIdAsync(bookInputModelDTO.AuthorId);
+            if (author == null)
+            {
+                return await Result.ResultAsync(StatusCodes.Status404NotFound, GlobalMessageConstants.MessageDataNotFound);
+            }
+
+            var bookObj = bookInputModelDTO.ConvertToObject();
+            await _bookRepository.UpdateAsync(bookObj);
+
+            return await Result.ResultAsync(StatusCodes.Status200OK, GlobalMessageConstants.MessageSucessChange, bookObj.ConvertToObjectOutPut());
         }
 
-        public async Task DeleteAsync(int id)
-        {
-            await _bookRepository.DeleteAsync(id);
-        }
-
-        public async Task<List<BookOutputModelDTO>> GetAllAsync()
-        {
-            var books = await _bookRepository.GetAllAsync();
-            
-            return books;
-        }
-
-        public async Task<BookOutputModelDTO> GetByIdAsync(int id)
+        public async Task<IResult> DeleteAsync(int id)
         {
             var book = await _bookRepository.GetByIdAsync(id);
 
-            return book;
+            if (book == null)
+            {
+                return await Result.ResultAsync(StatusCodes.Status404NotFound, GlobalMessageConstants.MessageDataNotFound);
+            }
+
+            await _bookRepository.DeleteAsync(id);
+
+            return await Result.ResultAsync(StatusCodes.Status200OK, GlobalMessageConstants.MessageSucessRemove, book);
         }
 
-        public async Task<List<BookOutputModelDTO>> GetBooksByProgress(int progress)
+        public async Task<IResult> GetAllAsync()
+        {
+            var books = await _bookRepository.GetAllAsync();
+
+            return await Result.ResultAsync(StatusCodes.Status200OK, books);
+        }
+
+        public async Task<IResult> GetByIdAsync(int id)
+        {
+            var book = await _bookRepository.GetByIdAsync(id);
+
+            if (book == null)
+            {
+                return await Result.ResultAsync(StatusCodes.Status404NotFound, GlobalMessageConstants.MessageDataNotFound);
+            }
+
+            return await Result.ResultAsync(StatusCodes.Status200OK, book);
+        }
+
+        public async Task<IResult> GetBooksByProgress(int progress)
         {
             var books = await _bookRepository.GetBooksByProgress(progress);
 
-            return books;
+            return await Result.ResultAsync(StatusCodes.Status200OK, books);
         }
 
-        public async Task<List<BookOutputModelDTO>> GetBooksByGenre(int genre)
+        public async Task<IResult> GetBooksByGenre(int genre)
         {
             var books = await _bookRepository.GetBooksByGenre(genre);
 
-            return books;
+            return await Result.ResultAsync(StatusCodes.Status200OK, books);
         }
 
-        public async Task<List<BookOutputModelDTO>> GetBooksByAuthor(int author)
+        public async Task<IResult> GetBooksByAuthor(int authorId, AuthorService authorService)
         {
-            var books = await _bookRepository.GetBooksByAuthor(author);
+            var author = await authorService.GetByIdAsync(authorId);
 
-            return books;
+            if (author == null)
+            {
+                return await Result.ResultAsync(StatusCodes.Status404NotFound, GlobalMessageConstants.MessageDataNotFound);
+            }
+
+            var books = await _bookRepository.GetBooksByAuthor(authorId);
+
+            return await Result.ResultAsync(StatusCodes.Status200OK, books);
         }
     }
 }

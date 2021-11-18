@@ -16,7 +16,7 @@ namespace AppEstanteVirtual.API.Controllers.v1
     public class AuthorsController : ControllerBase
     {
         private readonly AuthorService _authorService;
-        private Task<IResult> _result;
+        private IResult _result;
 
         public AuthorsController(AuthorService authorService)
         {
@@ -28,9 +28,8 @@ namespace AppEstanteVirtual.API.Controllers.v1
         {
             try
             {
-                var authors = await _authorService.GetAllAsync();
+                _result = await _authorService.GetAllAsync();
 
-                _result = Result.ResultAsync(GlobalMessageConstants.MessageEmpty, authors);
                 return Ok(_result);
             }
             catch (Exception ex)
@@ -44,15 +43,13 @@ namespace AppEstanteVirtual.API.Controllers.v1
         {
             try
             {
-                var author = await _authorService.GetByIdAsync(id);
+                _result = await _authorService.GetByIdAsync(id);
 
-                if (author == null)
+                if (_result.StatusCode == StatusCodes.Status404NotFound)
                 {
-                    _result = Result.ResultAsync(GlobalMessageConstants.MessageDataNotFound, author);
                     return NotFound(_result);
                 }
 
-                _result = Result.ResultAsync(GlobalMessageConstants.MessageEmpty, author);
                 return Ok(_result);
             }
             catch (Exception ex)
@@ -66,9 +63,8 @@ namespace AppEstanteVirtual.API.Controllers.v1
         {
             try
             {
-                await _authorService.CreateAsync(authorInputModelDTO);
+                _result = await _authorService.CreateAsync(authorInputModelDTO);
 
-                _result = Result.ResultAsync(GlobalMessageConstants.MessageSucessRegistered, authorInputModelDTO.ConvertToObject().ConvertToObjectOutPut());
                 return Ok(_result);
             }
             catch (Exception ex)
@@ -82,16 +78,12 @@ namespace AppEstanteVirtual.API.Controllers.v1
         {
             try
             {
-                var author = await _authorService.GetByIdAsync(id);
-                if (author == null)
+                _result = await _authorService.UpdateAsync(id, authorInputModelDTO);
+                if (_result.StatusCode == StatusCodes.Status404NotFound)
                 {
-                    _result = Result.ResultAsync(GlobalMessageConstants.MessageDataNotFound, authorInputModelDTO);
                     return NotFound(_result);
                 }
 
-                await _authorService.UpdateAsync(authorInputModelDTO);
-
-                _result = Result.ResultAsync(GlobalMessageConstants.MessageSucessChange, authorInputModelDTO);
                 return Ok(_result);
             }
             catch (Exception ex)
@@ -106,16 +98,12 @@ namespace AppEstanteVirtual.API.Controllers.v1
         {
             try
             {
-                var author = await _authorService.GetByIdAsync(id);
-                if (author == null)
+                _result = await _authorService.DeleteAsync(id);
+                if (_result.StatusCode == StatusCodes.Status404NotFound)
                 {
-                    _result = Result.ResultAsync(GlobalMessageConstants.MessageDataNotFound, author);
                     return NotFound(_result);
                 }
 
-                await _authorService.DeleteAsync(id);
-
-                _result = Result.ResultAsync(GlobalMessageConstants.MessageSucessRemove, author);
                 return Ok(_result);
             }
             catch (Exception ex)

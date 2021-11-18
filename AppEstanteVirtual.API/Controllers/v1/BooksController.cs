@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AppEstanteVirtual.Domain.Shared;
 using AppEstanteVirtual.Domain.Constants;
 using AppEstanteVirtual.Domain.Shared.Contracts;
+using AppEstanteVirtual.Domain.Shared;
 using Microsoft.AspNetCore.Http;
 
 namespace AppEstanteVirtual.API.Controllers.v1
@@ -15,7 +16,7 @@ namespace AppEstanteVirtual.API.Controllers.v1
     public class BooksController : ControllerBase
     {
         private readonly BookService _bookService;
-        private Task<IResult> _result;
+        private IResult _result;
 
         public BooksController(BookService bookService)
         {
@@ -27,9 +28,8 @@ namespace AppEstanteVirtual.API.Controllers.v1
         {
             try
             {
-                var books = await _bookService.GetAllAsync();
+                _result = await _bookService.GetAllAsync();
 
-                _result = Result.ResultAsync(GlobalMessageConstants.MessageEmpty, books);
                 return Ok(_result);
             }
             catch (Exception ex)
@@ -43,15 +43,13 @@ namespace AppEstanteVirtual.API.Controllers.v1
         {
             try
             {
-                var book = await _bookService.GetByIdAsync(id);
+                _result = await _bookService.GetByIdAsync(id);
 
-                if (book == null)
+                if (_result.StatusCode == StatusCodes.Status404NotFound)
                 {
-                    _result = Result.ResultAsync(GlobalMessageConstants.MessageDataNotFound, book);
                     return NotFound(_result);
                 }
 
-                _result = Result.ResultAsync(GlobalMessageConstants.MessageEmpty, book);
                 return Ok(_result);
             }
             catch (Exception ex)
@@ -66,9 +64,8 @@ namespace AppEstanteVirtual.API.Controllers.v1
         {
             try
             {
-                var books = await _bookService.GetBooksByProgress(progress);
+                _result = await _bookService.GetBooksByProgress(progress);
 
-                _result = Result.ResultAsync(GlobalMessageConstants.MessageEmpty, books);
                 return Ok(_result);
             }
             catch (Exception ex)
@@ -82,9 +79,8 @@ namespace AppEstanteVirtual.API.Controllers.v1
         {
             try
             {
-                var books = await _bookService.GetBooksByGenre(genre);
+                _result = await _bookService.GetBooksByGenre(genre);
 
-                _result = Result.ResultAsync(GlobalMessageConstants.MessageEmpty, books);
                 return Ok(_result);
             }
             catch (Exception ex)
@@ -99,17 +95,13 @@ namespace AppEstanteVirtual.API.Controllers.v1
         {
             try
             {
-                var author = await authorService.GetByIdAsync(authorId);
+                _result = await _bookService.GetBooksByAuthor(authorId, authorService);
 
-                if (author == null)
+                if (_result.StatusCode == StatusCodes.Status404NotFound)
                 {
-                    _result = Result.ResultAsync(GlobalMessageConstants.MessageDataNotFound, author);
                     return NotFound(_result);
                 }
 
-                var books = await _bookService.GetBooksByAuthor(authorId);
-
-                _result = Result.ResultAsync(GlobalMessageConstants.MessageEmpty, books);
                 return Ok(_result);
             }
             catch (Exception ex)
@@ -123,9 +115,8 @@ namespace AppEstanteVirtual.API.Controllers.v1
         {
             try
             {
-                await _bookService.CreateAsync(bookInputModelDTO);
-
-                _result = Result.ResultAsync(GlobalMessageConstants.MessageSucessRegistered, bookInputModelDTO.ConvertToObject().ConvertToObjectOutPut());
+                _result = await _bookService.CreateAsync(bookInputModelDTO);
+                
                 return Ok(_result);
             }
             catch (Exception ex)
@@ -139,23 +130,12 @@ namespace AppEstanteVirtual.API.Controllers.v1
         {
             try
             {
-                var book = await _bookService.GetByIdAsync(id);
-                if (book == null)
+                _result = await _bookService.UpdateAsync(id, bookInputModelDTO, authorService);
+                if (_result.StatusCode == StatusCodes.Status404NotFound)
                 {
-                    _result = Result.ResultAsync(GlobalMessageConstants.MessageDataNotFound, bookInputModelDTO);
                     return NotFound(_result);
                 }
 
-                var author = await authorService.GetByIdAsync(bookInputModelDTO.AuthorId);
-                if (author == null)
-                {
-                    _result = Result.ResultAsync(GlobalMessageConstants.MessageDataNotFound, author);
-                    return NotFound(_result);
-                }
-
-                await _bookService.UpdateAsync(bookInputModelDTO);
-
-                _result = Result.ResultAsync(GlobalMessageConstants.MessageSucessChange, bookInputModelDTO);
                 return Ok(_result);
             }
             catch (Exception ex)
@@ -169,16 +149,13 @@ namespace AppEstanteVirtual.API.Controllers.v1
         {
             try
             {
-                var book = await _bookService.GetByIdAsync(id);
-                if (book == null)
+                _result = await _bookService.DeleteAsync(id);
+
+                if (_result.StatusCode == StatusCodes.Status404NotFound)
                 {
-                    _result = Result.ResultAsync(GlobalMessageConstants.MessageDataNotFound, book);
                     return NotFound(_result);
                 }
 
-                await _bookService.DeleteAsync(id);
-
-                _result = Result.ResultAsync(GlobalMessageConstants.MessageSucessRemove, book);
                 return Ok(_result);
             }
             catch (Exception ex)

@@ -26,9 +26,6 @@ namespace AppEstanteVirtual.Infrastructure.Mappings
 
             builder.HasMany(prop => prop.Books)
                 .WithOne(prop => prop.Author);
-
-            builder.Navigation(prop => prop.Books)
-                .UsePropertyAccessMode(PropertyAccessMode.Property);
         }
     }
 }

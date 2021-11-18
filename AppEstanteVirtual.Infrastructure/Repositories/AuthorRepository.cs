@@ -40,6 +40,7 @@ namespace AppEstanteVirtual.Infrastructure.Repositories
         {
             var authors = await _context.Authors
                             .AsNoTrackingWithIdentityResolution()
+                            .Include(x => x.Books)
                             .Select(x => x.ConvertToObjectOutPut())
                             .ToListAsync();
             return authors;

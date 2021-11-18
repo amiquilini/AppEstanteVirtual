@@ -2,24 +2,24 @@
 
 namespace AppEstanteVirtual.Domain.Entities
 {
-    public class EntityBase<TSource, TDestiny, TOutPut>
+    public abstract class EntityBase<TSource, TDestiny, TOutPut>
     {
         private readonly Mapper _mapperTDestiny;
         private readonly Mapper _mapperTOutPut;
 
         protected EntityBase()
         {
-            var mapperConfiguration = new MapperConfiguration(cfg =>
+            var mapperConfiguration1 = new MapperConfiguration(cfg =>
                 cfg.CreateMap<TSource, TDestiny>()
             );
 
-            _mapperTDestiny = new Mapper(mapperConfiguration);
+            _mapperTDestiny = new Mapper(mapperConfiguration1);
 
-            var mapperConfiguration3 = new MapperConfiguration(cfg =>
+            var mapperConfiguration2 = new MapperConfiguration(cfg =>
                 cfg.CreateMap<TSource, TOutPut>()
             );
 
-            _mapperTOutPut = new Mapper(mapperConfiguration3);
+            _mapperTOutPut = new Mapper(mapperConfiguration2);
         }
 
         public TDestiny ConvertToObject() => _mapperTDestiny.Map<TDestiny>(this);
